@@ -1,0 +1,41 @@
+version: '3.8'
+
+services:
+  frontend:
+    build:
+      context: ./fe
+      dockerfile: Dockerfile.react
+    ports:
+      - "5173:5173"
+    command: npm run dev -- --host 0.0.0.0
+
+  backend:    
+    build:
+      context: ./be
+      dockerfile: Dockerfile.golang
+    env_file:
+      - ./be/.env
+    ports:
+      - "9000:9000"
+    volumes:
+      - .:/usr/src/app
+    working_dir: /usr/src/app/be
+    command: air ./main.go -b 0.0.0.0
+    depends_on:
+      - frontend
+      - db   
+  db:
+    image: postgres:15
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=postgres
+    ports:
+      - "5222:5432"
+    volumes:
+      - ./be/toDoListSql.sql:/docker-entrypoint-initdb.d/dump.sql  
+      - postgres-db:/var/lib/postgresql/data
+
+volumes:
+  postgres-db:
+ 
